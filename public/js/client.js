@@ -1,10 +1,15 @@
 var socket = io();
 const form = document.getElementById('messageform');
 const messagebox = document.getElementById('text-box');
-//container where we wanna display message
+const sendbutton = document.getElementById('send-button')
 const container = document.querySelector('.text-area');
 const pcontainer = document.getElementById('player-area')
 
+
+function startgame() {
+    console.log('button pressed')
+    socket.emit('start-game')
+}
 
 //function to dsplay new user joined message
 const appendnewuser = (message, color) => {
@@ -15,7 +20,6 @@ const appendnewuser = (message, color) => {
     messageelement.style.color = color;
     container.append(messageelement)
 }
-
 
 //function to display message
 const appendmessage = (message, position) => {
@@ -28,7 +32,6 @@ const appendmessage = (message, position) => {
 
 //function on submitting form
 form.addEventListener('submit', (e) => {
-    console.log('form running')
     e.preventDefault()
     const message = messagebox.value;
     appendmessage(`you: ${message}`, 'right');
@@ -41,13 +44,13 @@ socket.emit('new-user-joined', uname);
 
 //this runs when new user joins
 socket.on('user-joined', data => {
-    appendnewuser(`${data.uname} joined the game`, 'greenyellow')
+    appendnewuser(`${data} joined the game`, 'greenyellow')
 })
 
 socket.on('receive', data => {
-    appendmessage(`${data.name} : ${data.message}`, 'left')
+    appendmessage(`${data.name}: ${data.message}`, 'left')
 })
 
 socket.on('user-left', data => {
-    appendnewuser(`${data} left the game`, 'red')
+    appendnewuser(`${data.name} left the game`, 'red')
 })

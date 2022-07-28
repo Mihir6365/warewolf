@@ -7,31 +7,41 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-const users = {};
+var users = {};
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-io.on('connection', (socket) => {
 
-    //for the event called 'new user joined', the function will run
+io.on('connection', (socket) => {
     socket.on('new-user-joined', uname => {
-        users[socket.id] = uname;
-        // console.log(socket.client.conn.server.clientsCount)
-        console.log(users)
-        socket.broadcast.emit('user-joined', { uname: uname, id: socket.id })
+        let user = { name: uname, id: socket.id }
+        users[socket.id] = user
+            // console.log(socket.client.conn.server.clientsCount)
+        socket.broadcast.emit('user-joined', uname)
     });
     socket.on('send', message => {
-        socket.broadcast.emit('receive', { message: message, name: users[socket.id] })
+        socket.broadcast.emit('receive', { message: message, name: users[socket.id].name })
     });
-    socket.on('disconnect', message => {
+    socket.on('disconnect', () => {
         socket.broadcast.emit('user-left', users[socket.id]);
-        // console.log(socket.client.conn.server.clientsCount)
-        console.log(users)
         delete users[socket.id];
+    });
+
+    socket.on('start-game', () => {
+        var roles = ['seer', 'wolf']
+        var playercount = socket.client.conn.server.clientsCount;
+        for (let i = 0; i < playercount - 2; i++) {
+            roles.push('villager')
+        }
+        for (var players in users) {
+            var random = Math.floor(Math.random() * playercount)
+            users[players].role = roles[random];
+            roles.splice(random, 1)
+            playercount--
+        }
     });
 });
 
 server.listen(3000, () => {
-    console.log('listening on *:3000');
+    console.log('server running');
 });
