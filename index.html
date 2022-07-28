@@ -4,37 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="./js/client.js"></script>
     <link rel="stylesheet" href="./css/style.css">
-    <script src="http://localhost:3000/socket.ip/socket.io.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Warewolf</title>
 </head>
 
 <body>
+    <div id="player-area">
+        <form class="voteform" action="">
+            <div style="float:left;">name</div>
+            <button type="submit" class='button' id="vote-button" style='float:right;'>vote</button>
+        </form>
+    </div>
     <div class="text-area">
-        <div class="message right">person1: Hey!</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
-        <div class="message left">person2: sup</div>
+        <div class="message center" style="color: greenyellow;">The game has started</div>
     </div>
     <div class="form">
         <form class="text-box" id="messageform" action="">
-            <input type="text" id="text-box">
-            <button type="submit" id="send-button">send</button>
+            <input type="text" id="text-box" autocomplete="off">
+            <button type="submit" class="button" id="send-button">send</button>
         </form>
     </div>
 </body>
