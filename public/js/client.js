@@ -4,11 +4,24 @@ const messagebox = document.getElementById('text-box');
 const sendbutton = document.getElementById('send-button')
 const container = document.querySelector('.text-area');
 const pcontainer = document.getElementById('player-area')
+const rolebox = document.getElementById('rolearea')
 
 
 function startgame() {
-    console.log('button pressed')
     socket.emit('start-game')
+}
+
+function togglechat() {
+    if (messagebox.disabled == false) {
+        messagebox.disabled = true
+        messagebox.value = null
+        sendbutton.disabled = true
+        messagebox.placeholder = 'chat disabled'
+    } else {
+        messagebox.placeholder = ''
+        messagebox.disabled = false
+        sendbutton.disabled = false
+    }
 }
 
 //function to dsplay new user joined message
@@ -36,7 +49,7 @@ form.addEventListener('submit', (e) => {
     const message = messagebox.value;
     appendmessage(`you: ${message}`, 'right');
     socket.emit('send', message);
-    messagebox.value = '';
+    messagebox.value = null;
 })
 
 const uname = prompt("Enter your name to join");
@@ -53,4 +66,8 @@ socket.on('receive', data => {
 
 socket.on('user-left', data => {
     appendnewuser(`${data.name} left the game`, 'red')
+})
+
+socket.on('server-message', message => {
+    rolearea.innerText = `Your Role Is : ${message}`
 })

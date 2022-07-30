@@ -13,6 +13,7 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+
     socket.on('new-user-joined', uname => {
         let user = { name: uname, id: socket.id }
         users[socket.id] = user
@@ -28,17 +29,20 @@ io.on('connection', (socket) => {
     });
 
     socket.on('start-game', () => {
-        var roles = ['seer', 'wolf']
+        //give random roles. seer and wolf are fixed. rest are filled with villagers
+        var roles = ['Seer', 'Wolf']
         var playercount = socket.client.conn.server.clientsCount;
         for (let i = 0; i < playercount - 2; i++) {
-            roles.push('villager')
+            roles.push('Villager')
         }
         for (var players in users) {
             var random = Math.floor(Math.random() * playercount)
             users[players].role = roles[random];
+            io.sockets.in(players).emit('server-message', roles[random])
             roles.splice(random, 1)
             playercount--
         }
+        console.log(users)
     });
 });
 

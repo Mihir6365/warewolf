@@ -12,15 +12,16 @@
 </head>
 
 <body>
-    <button class="button" onclick="startgame()">start</button>
+    <button class="button" onclick="startgame()">start game</button>
+    <button class="button" onclick="togglechat()">disable chat</button>
     <div id="player-area">
         <form class="voteform" action="">
             <div style="float:left;">name</div>
             <button type="submit" class='button' id="vote-button" style='float:right;'>vote</button>
         </form>
     </div>
+    <div id="fixed-box"><strong id="rolearea"> Waiting for the game to start </strong></div>
     <div class="text-area">
-        <div class="message center" style="color: greenyellow;">The game has started</div>
     </div>
     <div class="form">
         <form class="text-box" id="messageform" action="">
