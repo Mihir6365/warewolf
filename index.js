@@ -42,6 +42,8 @@ io.on('connection', (socket) => {
             roles.splice(random, 1)
             playercount--
         }
+        io.sockets.emit()
+            // io.sockets.emit('startvote', users)
         console.log(users)
     });
 });

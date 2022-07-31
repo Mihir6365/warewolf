@@ -3,12 +3,13 @@ const form = document.getElementById('messageform');
 const messagebox = document.getElementById('text-box');
 const sendbutton = document.getElementById('send-button')
 const container = document.querySelector('.text-area');
-const pcontainer = document.getElementById('player-area')
+const pcontainer = document.getElementById('voting-area')
 const rolebox = document.getElementById('rolearea')
 
 
 function startgame() {
     socket.emit('start-game')
+    togglechat()
 }
 
 function togglechat() {
@@ -47,7 +48,7 @@ const appendmessage = (message, position) => {
 form.addEventListener('submit', (e) => {
     e.preventDefault()
     const message = messagebox.value;
-    appendmessage(`you: ${message}`, 'right');
+    appendmessage(`You: ${message}`, 'right');
     socket.emit('send', message);
     messagebox.value = null;
 })
@@ -70,4 +71,25 @@ socket.on('user-left', data => {
 
 socket.on('server-message', message => {
     rolearea.innerText = `Your Role Is : ${message}`
+})
+
+socket.on('startvote', players => {
+    Object.keys(players).forEach(function(player) {
+        console.log('player is : ', player)
+        var form = document.createElement('form')
+        form.classList.add('voteform')
+        var div = document.createElement('div')
+        div.classList.add('left')
+        div.classList.add('text')
+        div.innerText = players[player].name;
+        var button = document.createElement('button')
+        button.setAttribute('type', 'submit')
+        button.classList.add('button')
+        button.classList.add('right')
+        button.setAttribute('id', 'vote-button')
+        button.textContent = 'Vote'
+        form.appendChild(div);
+        form.appendChild(button)
+        pcontainer.appendChild(form)
+    })
 })

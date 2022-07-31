@@ -10,6 +10,10 @@
     background-color: rgb(51, 51, 51);
 }
 
+body {
+    background-color: rgb(63, 8, 114);
+}
+
 #fixed-box {
     line-height: 2;
     font-size: large;
@@ -21,7 +25,7 @@
     position: absolute;
     text-align: center;
     color: rgb(146, 106, 246);
-    right: 0.5%;
+    right: 1%;
     background-color: rgb(51, 51, 51);
 }
 
@@ -37,7 +41,7 @@
     text-align: center;
 }
 
-#player-area {
+#voting-area {
     border-radius: 12px;
     width: 30%;
     height: 50vh;
@@ -75,7 +79,7 @@
     display: inline;
     height: 10px;
     width: 30%;
-    right: 0%;
+    right: 0.5%;
     bottom: 25px;
 }
 
@@ -93,4 +97,9 @@
     color: white;
     width: 30%;
     border-radius: 5px;
+}
+
+.text {
+    padding: 4px;
+    font-size: large;
 }
