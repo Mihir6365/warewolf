@@ -5,11 +5,10 @@ const sendbutton = document.getElementById('send-button')
 const container = document.querySelector('.text-area');
 const pcontainer = document.getElementById('voting-area')
 const rolebox = document.getElementById('rolearea')
-
+var phase = 'night';
 
 function startgame() {
     socket.emit('start-game')
-    togglechat()
 }
 
 function togglechat() {
@@ -74,8 +73,8 @@ socket.on('server-message', message => {
 })
 
 socket.on('startvote', players => {
+    console.log("function running")
     Object.keys(players).forEach(function(player) {
-        console.log('player is : ', player)
         var form = document.createElement('form')
         form.classList.add('voteform')
         var div = document.createElement('div')
@@ -87,9 +86,13 @@ socket.on('startvote', players => {
         button.classList.add('button')
         button.classList.add('right')
         button.setAttribute('id', 'vote-button')
-        button.textContent = 'Vote'
+        if (phase == 'night') { button.textContent = 'Kill' } else { button.textContent = 'Vote' }
         form.appendChild(div);
         form.appendChild(button)
         pcontainer.appendChild(form)
     })
+})
+
+socket.on('gamephasenight', players => {
+    togglechat();
 })

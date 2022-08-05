@@ -103,3 +103,7 @@ body {
     padding: 4px;
     font-size: large;
 }
+
+.hidden {
+    display: none;
+}
