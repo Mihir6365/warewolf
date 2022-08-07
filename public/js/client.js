@@ -72,7 +72,36 @@ socket.on('server-message', message => {
     rolearea.innerText = `Your Role Is : ${message}`
 })
 
-socket.on('startvote', players => {
+socket.on('startkill', players => {
+    pcontainer.classList.remove('hidden');
+    Object.keys(players).forEach(function(player) {
+        if (players[player].role.localeCompare('Wolf') != 0 && players[player].status.localeCompare('dead') != 0) {
+            console.log(' role is', players[player].role.localeCompare('Wolf'))
+            var form = document.createElement('form')
+            form.classList.add('voteform')
+            var div = document.createElement('div')
+            div.classList.add('left')
+            div.classList.add('text')
+            div.innerText = players[player].name;
+            var button = document.createElement('button')
+            button.setAttribute('type', 'submit')
+            button.classList.add('button')
+            button.classList.add('right')
+            button.setAttribute('id', 'vote-button')
+            button.textContent = 'Kill'
+            form.appendChild(div);
+            form.appendChild(button)
+            form.addEventListener('submit', (e) => {
+                e.preventDefault()
+                pcontainer.classList.add('hidden')
+                socket.emit("kill", player)
+            })
+            pcontainer.appendChild(form)
+        }
+    })
+})
+
+socket.on('suspect', players => {
     pcontainer.classList.remove('hidden');
     Object.keys(players).forEach(function(player) {
         var form = document.createElement('form')
@@ -86,16 +115,28 @@ socket.on('startvote', players => {
         button.classList.add('button')
         button.classList.add('right')
         button.setAttribute('id', 'vote-button')
-        if (phase == 'night') { button.textContent = 'Kill' } else { button.textContent = 'Vote' }
+        button.textContent = 'suspect'
         form.appendChild(div);
         form.appendChild(button)
         form.addEventListener('submit', (e) => {
             e.preventDefault()
+            pcontainer.classList.add('hidden')
+            if (players[player].role == 'Wolf') { appendnewuser(`${players[player].name} was the wolf`, 'yellow') } else { appendnewuser(`${players[player].name} was NOT the wolf`, 'yellow') }
+            socket.emit('toggleday')
         })
         pcontainer.appendChild(form)
     })
 })
 
+
 socket.on('gamephasenight', players => {
-    togglechat();
+    Object.keys(players).forEach(function(player) {
+        if (players[player].status != 'dead')
+            togglechat();
+    })
+})
+
+socket.on('gamephaseday', data => {
+    appendnewuser(`${data.deadname} was killed`, 'yellow')
+    togglechat()
 })

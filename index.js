@@ -8,13 +8,14 @@ const io = new Server(server);
 app.use(express.static(path.join(__dirname, "public")));
 
 var users = {};
+var recentdeath;
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
 io.on("connection", (socket) => {
     socket.on("new-user-joined", (uname) => {
-        let user = { name: uname, id: socket.id };
+        let user = { name: uname, id: socket.id, status: 'alive' };
         users[socket.id] = user;
         // console.log(socket.client.conn.server.clientsCount)
         socket.broadcast.emit("user-joined", uname);
@@ -52,10 +53,20 @@ io.on("connection", (socket) => {
             playercount--;
         }
         io.sockets.emit("gamephasenight", users);
-        io.in('wolf').emit("startvote", users);
+        io.in('wolf').emit("startkill", users);
         console.log(users);
     });
+    socket.on('kill', player => {
+        users[player].status = 'dead'
+        recentdeath = player
+        io.in('seer').emit("suspect", users)
+    })
+    socket.on('toggleday', () => {
+        console.log(users[recentdeath].name);
+        io.sockets.emit('gamephaseday', { deadname: users[recentdeath].name, players: users })
+    })
 });
+
 
 server.listen(3000, () => {
     console.log("server running");
