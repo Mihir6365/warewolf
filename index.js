@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
     socket.on("new-user-joined", (uname) => {
         let user = { name: uname, id: socket.id };
         users[socket.id] = user;
@@ -41,18 +41,18 @@ io.on("connection", socket => {
             var random = Math.floor(Math.random() * playercount);
             users[players].role = roles[random];
             if (roles[random] === 'Wolf') {
-                socket.join('wolf');
+                io.sockets.sockets.get(players).join('wolf');
             } else if (roles[random] == "Seer") {
-                socket.join("seer");
+                io.sockets.sockets.get(players).join("seer");
             } else {
-                socket.join("villager");
+                io.sockets.sockets.get(players).join("villager");
             }
             io.sockets.in(players).emit("server-message", roles[random]);
             roles.splice(random, 1);
             playercount--;
         }
         io.sockets.emit("gamephasenight", users);
-        // socket.to('wolf').emit("startvote", users);
+        io.in('wolf').emit("startvote", users);
         console.log(users);
     });
 });

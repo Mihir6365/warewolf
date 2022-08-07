@@ -73,7 +73,7 @@ socket.on('server-message', message => {
 })
 
 socket.on('startvote', players => {
-    console.log("function running")
+    pcontainer.classList.remove('hidden');
     Object.keys(players).forEach(function(player) {
         var form = document.createElement('form')
         form.classList.add('voteform')
@@ -89,6 +89,9 @@ socket.on('startvote', players => {
         if (phase == 'night') { button.textContent = 'Kill' } else { button.textContent = 'Vote' }
         form.appendChild(div);
         form.appendChild(button)
+        form.addEventListener('submit', (e) => {
+            e.preventDefault()
+        })
         pcontainer.appendChild(form)
     })
 })
