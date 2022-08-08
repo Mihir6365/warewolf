@@ -5,6 +5,7 @@ const sendbutton = document.getElementById('send-button')
 const container = document.querySelector('.text-area');
 const pcontainer = document.getElementById('voting-area')
 const rolebox = document.getElementById('rolearea')
+const gamestartbutton = document.getElementById('gamestartbutton')
 var phase = 'night';
 
 function startgame() {
@@ -25,7 +26,7 @@ function togglechat() {
 }
 
 //function to dsplay new user joined message
-const appendnewuser = (message, color) => {
+const appendsysmessage = (message, color) => {
     const messageelement = document.createElement('div')
     messageelement.innerText = message;
     messageelement.classList.add('message')
@@ -57,7 +58,7 @@ socket.emit('new-user-joined', uname);
 
 //this runs when new user joins
 socket.on('user-joined', data => {
-    appendnewuser(`${data} joined the game`, 'greenyellow')
+    appendsysmessage(`${data} joined the game`, 'greenyellow')
 })
 
 socket.on('receive', data => {
@@ -65,7 +66,7 @@ socket.on('receive', data => {
 })
 
 socket.on('user-left', data => {
-    appendnewuser(`${data.name} left the game`, 'red')
+    appendsysmessage(`${data.name} left the game`, 'red')
 })
 
 socket.on('server-message', message => {
@@ -74,6 +75,7 @@ socket.on('server-message', message => {
 
 socket.on('startkill', players => {
     pcontainer.classList.remove('hidden');
+    pcontainer.innerHTML = ""
     Object.keys(players).forEach(function(player) {
         if (players[player].role.localeCompare('Wolf') != 0 && players[player].status.localeCompare('dead') != 0) {
             console.log(' role is', players[player].role.localeCompare('Wolf'))
@@ -103,40 +105,74 @@ socket.on('startkill', players => {
 
 socket.on('suspect', players => {
     pcontainer.classList.remove('hidden');
+    pcontainer.innerHTML = ""
+
     Object.keys(players).forEach(function(player) {
-        var form = document.createElement('form')
-        form.classList.add('voteform')
-        var div = document.createElement('div')
-        div.classList.add('left')
-        div.classList.add('text')
-        div.innerText = players[player].name;
-        var button = document.createElement('button')
-        button.setAttribute('type', 'submit')
-        button.classList.add('button')
-        button.classList.add('right')
-        button.setAttribute('id', 'vote-button')
-        button.textContent = 'suspect'
-        form.appendChild(div);
-        form.appendChild(button)
-        form.addEventListener('submit', (e) => {
-            e.preventDefault()
-            pcontainer.classList.add('hidden')
-            if (players[player].role == 'Wolf') { appendnewuser(`${players[player].name} was the wolf`, 'yellow') } else { appendnewuser(`${players[player].name} was NOT the wolf`, 'yellow') }
-            socket.emit('toggleday')
-        })
-        pcontainer.appendChild(form)
+        if (players[player].role.localeCompare('Seer') != 0) {
+            var form = document.createElement('form')
+            form.classList.add('voteform')
+            var div = document.createElement('div')
+            div.classList.add('left')
+            div.classList.add('text')
+            div.innerText = players[player].name;
+            var button = document.createElement('button')
+            button.setAttribute('type', 'submit')
+            button.classList.add('button')
+            button.classList.add('right')
+            button.setAttribute('id', 'vote-button')
+            button.textContent = 'suspect'
+            form.appendChild(div);
+            form.appendChild(button)
+            form.addEventListener('submit', (e) => {
+                e.preventDefault()
+                pcontainer.classList.add('hidden')
+                if (players[player].role == 'Wolf') { appendsysmessage(`${players[player].name} was the wolf`, 'yellow') } else { appendsysmessage(`${players[player].name} was NOT the wolf`, 'yellow') }
+                socket.emit('toggleday')
+            })
+            pcontainer.appendChild(form)
+        }
     })
 })
 
 
-socket.on('gamephasenight', players => {
-    Object.keys(players).forEach(function(player) {
-        if (players[player].status != 'dead')
-            togglechat();
-    })
-})
-
-socket.on('gamephaseday', data => {
-    appendnewuser(`${data.deadname} was killed`, 'yellow')
+socket.on('gamephasenight', () => {
+    gamestartbutton.classList.add('hidden');
     togglechat()
+})
+
+socket.on('display-dead', name => {
+    appendsysmessage(`${name} was killed`, 'yellow')
+})
+
+socket.on('gamephaseday', players => {
+    togglechat();
+    pcontainer.classList.remove('hidden');
+    pcontainer.innerHTML = ""
+
+    Object.keys(players).forEach(function(player) {
+        if (players[player].status.localeCompare('dead') != 0) {
+            console.log(' role is', players[player].role.localeCompare('Wolf'))
+            var form = document.createElement('form')
+            form.classList.add('voteform')
+            var div = document.createElement('div')
+            div.classList.add('left')
+            div.classList.add('text')
+            div.innerText = players[player].name;
+            var button = document.createElement('button')
+            button.setAttribute('type', 'submit')
+            button.classList.add('button')
+            button.classList.add('right')
+            button.setAttribute('id', 'vote-button')
+            button.textContent = 'Vote'
+            form.appendChild(div);
+            form.appendChild(button)
+            form.addEventListener('submit', (e) => {
+                e.preventDefault()
+                pcontainer.classList.add('hidden')
+                appendsysmessage(`You voted for ${players[player].name}`, 'yellow')
+                    // socket.emit("kill", player)
+            })
+            pcontainer.appendChild(form)
+        }
+    })
 })

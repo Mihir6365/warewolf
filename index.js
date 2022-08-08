@@ -14,6 +14,7 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
+    socket.join('alive');
     socket.on("new-user-joined", (uname) => {
         let user = { name: uname, id: socket.id, status: 'alive' };
         users[socket.id] = user;
@@ -52,18 +53,19 @@ io.on("connection", (socket) => {
             roles.splice(random, 1);
             playercount--;
         }
-        io.sockets.emit("gamephasenight", users);
+        io.sockets.emit("gamephasenight");
         io.in('wolf').emit("startkill", users);
-        console.log(users);
+
     });
     socket.on('kill', player => {
         users[player].status = 'dead'
+        io.sockets.sockets.get(player).leave("alive");
         recentdeath = player
         io.in('seer').emit("suspect", users)
     })
     socket.on('toggleday', () => {
-        console.log(users[recentdeath].name);
-        io.sockets.emit('gamephaseday', { deadname: users[recentdeath].name, players: users })
+        io.sockets.emit('display-dead', users[recentdeath].name)
+        io.in('alive').emit('gamephaseday', users)
     })
 });
 
