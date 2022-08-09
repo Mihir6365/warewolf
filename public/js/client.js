@@ -12,17 +12,17 @@ function startgame() {
     socket.emit('start-game')
 }
 
-function togglechat() {
-    if (messagebox.disabled == false) {
-        messagebox.disabled = true
-        messagebox.value = null
-        sendbutton.disabled = true
-        messagebox.placeholder = 'chat disabled'
-    } else {
-        messagebox.placeholder = ''
-        messagebox.disabled = false
-        sendbutton.disabled = false
-    }
+function disablechat() {
+    messagebox.disabled = true
+    messagebox.value = null
+    sendbutton.disabled = true
+    messagebox.placeholder = 'chat disabled'
+}
+
+function enablechat() {
+    messagebox.placeholder = ''
+    messagebox.disabled = false
+    sendbutton.disabled = false
 }
 
 //function to dsplay new user joined message
@@ -78,7 +78,6 @@ socket.on('startkill', players => {
     pcontainer.innerHTML = ""
     Object.keys(players).forEach(function(player) {
         if (players[player].role.localeCompare('Wolf') != 0 && players[player].status.localeCompare('dead') != 0) {
-            console.log(' role is', players[player].role.localeCompare('Wolf'))
             var form = document.createElement('form')
             form.classList.add('voteform')
             var div = document.createElement('div')
@@ -97,6 +96,7 @@ socket.on('startkill', players => {
                 e.preventDefault()
                 pcontainer.classList.add('hidden')
                 socket.emit("kill", player)
+                socket.emit('toggleday')
             })
             pcontainer.appendChild(form)
         }
@@ -108,7 +108,7 @@ socket.on('suspect', players => {
     pcontainer.innerHTML = ""
 
     Object.keys(players).forEach(function(player) {
-        if (players[player].role.localeCompare('Seer') != 0) {
+        if (players[player].role.localeCompare('Seer') != 0 && players[player].status == 'alive') {
             var form = document.createElement('form')
             form.classList.add('voteform')
             var div = document.createElement('div')
@@ -135,9 +135,9 @@ socket.on('suspect', players => {
 })
 
 
-socket.on('gamephasenight', () => {
+socket.on('gamestart', () => {
     gamestartbutton.classList.add('hidden');
-    togglechat()
+    disablechat()
 })
 
 socket.on('display-dead', name => {
@@ -145,13 +145,12 @@ socket.on('display-dead', name => {
 })
 
 socket.on('gamephaseday', players => {
-    togglechat();
+    enablechat();
     pcontainer.classList.remove('hidden');
     pcontainer.innerHTML = ""
 
     Object.keys(players).forEach(function(player) {
         if (players[player].status.localeCompare('dead') != 0) {
-            console.log(' role is', players[player].role.localeCompare('Wolf'))
             var form = document.createElement('form')
             form.classList.add('voteform')
             var div = document.createElement('div')
@@ -170,9 +169,19 @@ socket.on('gamephaseday', players => {
                 e.preventDefault()
                 pcontainer.classList.add('hidden')
                 appendsysmessage(`You voted for ${players[player].name}`, 'yellow')
-                    // socket.emit("kill", player)
+                socket.emit("vote", player)
             })
             pcontainer.appendChild(form)
         }
     })
+})
+
+socket.on('game-end', winner => {
+    appendsysmessage(`${winner} won the game`, 'aqua')
+    pcontainer.classList.add('hidden')
+})
+
+socket.on('vote-end', name => {
+    disablechat();
+    appendsysmessage(`${name} was voted out`, 'yellow')
 })
