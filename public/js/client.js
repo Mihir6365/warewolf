@@ -141,7 +141,9 @@ socket.on('gamestart', () => {
 })
 
 socket.on('display-dead', name => {
-    appendsysmessage(`${name} was killed`, 'yellow')
+    if (phase != 'none') {
+        appendsysmessage(`${name} was killed`, 'yellow')
+    }
 })
 
 socket.on('gamephaseday', players => {
@@ -179,9 +181,14 @@ socket.on('gamephaseday', players => {
 socket.on('game-end', winner => {
     appendsysmessage(`${winner} won the game`, 'aqua')
     pcontainer.classList.add('hidden')
+    gamestartbutton.classList.remove('hidden')
+    gamestartbutton.textContent = 'play again'
+    phase = 'none'
 })
 
 socket.on('vote-end', name => {
-    disablechat();
-    appendsysmessage(`${name} was voted out`, 'yellow')
+    if (phase != 'none') {
+        disablechat();
+        appendsysmessage(`${name} was voted out`, 'yellow')
+    }
 })

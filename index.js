@@ -13,11 +13,11 @@ app.get("/", (req, res) => {
 
 var users = {};
 var recentdeath;
-var rolesubmission = 0
 var votecount = 0;
 var alivecount = 0;
 var wolfcount = 0;
-seercount = 0;
+var seercount = 0;
+var rolesubmission = 0
 
 io.on("connection", (socket) => {
     socket.join('alive');
@@ -34,13 +34,31 @@ io.on("connection", (socket) => {
             name: users[socket.id].name,
         });
     });
+
     socket.on("disconnect", () => {
         socket.broadcast.emit("user-left", users[socket.id]);
+        if (users[socket.id].role == 'Wolf') {
+            wolfcount--
+            if (wolfcount == 0) {
+                io.sockets.emit('game-end', 'Villagers')
+            }
+        }
+        if (users[socket.id].role == 'Seer') {
+            seercount--
+        }
+        if (users[socket.id].status == 'alive') {
+            alivecount--
+        }
+
+        alivecount--
         delete users[socket.id];
     });
 
     socket.on("start-game", () => {
         //give random roles. seer and wolf are fixed. rest are filled with villagers
+        votecount = 0;
+        wolfcount = 0;
+        seercount = 0;
         var roles = ["Seer", "Wolf"];
         var playercount = socket.client.conn.server.clientsCount;
         for (let i = 0; i < playercount - 2; i++) {
@@ -67,6 +85,7 @@ io.on("connection", (socket) => {
         io.sockets.emit("gamestart");
         io.in('wolf').emit("startkill", users);
         io.in('seer').emit("suspect", users)
+
     });
 
     socket.on('kill', player => {
@@ -82,6 +101,7 @@ io.on("connection", (socket) => {
         }
     })
     socket.on('toggleday', () => {
+        votecount = 0;
         rolesubmission++
         if (rolesubmission == seercount + wolfcount) {
             io.sockets.emit('display-dead', users[recentdeath].name)
@@ -90,6 +110,7 @@ io.on("connection", (socket) => {
         }
     })
     socket.on('vote', players => {
+        rolesubmission = 0
         votecount++
         users[players].votes++
             if (votecount == alivecount) {
@@ -110,6 +131,7 @@ io.on("connection", (socket) => {
                 if (maxplayersvoted > 1) {
                     console.log("draw votes")
                 } else {
+                    alivecount--
                     for (var player in users) {
                         if (users[player].votes == maxvotes) {
                             users[player].status = 'dead'
@@ -125,18 +147,20 @@ io.on("connection", (socket) => {
                                 io.sockets.sockets.get(player).leave("Seer");
                                 seercount--
                             }
+                            if (alivecount == 2 * wolfcount) {
+                                io.sockets.emit('game-end', 'Wolf')
+                            }
                             console.log(users[player].name, 'was voted out')
                             io.sockets.emit('vote-end', users[player].name)
 
                         }
                         users[player].votes = 0;
                     }
-                    alivecount--
                 }
                 votecount = 0;
+                io.in('wolf').emit("startkill", users);
+                io.in('seer').emit("suspect", users)
             }
-        io.in('wolf').emit("startkill", users);
-        io.in('seer').emit("suspect", users)
     })
 });
 

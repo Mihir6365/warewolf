@@ -1,1 +1,1 @@
-alivecount
+kill
