@@ -8,9 +8,13 @@ const rolebox = document.getElementById('rolearea')
 const gamestartbutton = document.getElementById('gamestartbutton')
 var phase = 'night';
 
+//=====================================================GAME START================================================================================
+
 function startgame() {
     socket.emit('start-game')
 }
+
+//=====================================================DISABLE CHAT==============================================================================
 
 function disablechat() {
     messagebox.disabled = true
@@ -19,13 +23,28 @@ function disablechat() {
     messagebox.placeholder = 'chat disabled'
 }
 
+//=====================================================ENABLE CHAT===============================================================================
+
 function enablechat() {
     messagebox.placeholder = ''
     messagebox.disabled = false
     sendbutton.disabled = false
 }
 
-//function to dsplay new user joined message
+//=====================================================TAKE USER NAME============================================================================
+
+const uname = prompt("Enter your name to join");
+socket.emit('new-user-joined', uname);
+
+//=====================================================START GAME================================================================================
+
+socket.on('gamestart', () => {
+    gamestartbutton.classList.add('hidden');
+    disablechat()
+})
+
+//=====================================================ADD SYSTEM MESSAGE TO CHAT BOX============================================================
+
 const appendsysmessage = (message, color) => {
     const messageelement = document.createElement('div')
     messageelement.innerText = message;
@@ -35,7 +54,8 @@ const appendsysmessage = (message, color) => {
     container.append(messageelement)
 }
 
-//function to display message
+//=====================================================NORMAL MESSAGE APPEND=====================================================================
+
 const appendmessage = (message, position) => {
     const messageelement = document.createElement('div')
     messageelement.innerText = message;
@@ -44,7 +64,8 @@ const appendmessage = (message, position) => {
     container.append(messageelement)
 }
 
-//function on submitting form
+//=====================================================SEND A NORMAL MESSAGE=====================================================================
+
 form.addEventListener('submit', (e) => {
     e.preventDefault()
     const message = messagebox.value;
@@ -53,25 +74,31 @@ form.addEventListener('submit', (e) => {
     messagebox.value = null;
 })
 
-const uname = prompt("Enter your name to join");
-socket.emit('new-user-joined', uname);
+//=====================================================SOMEONE JOINED GAME MESSAGE===============================================================
 
-//this runs when new user joins
 socket.on('user-joined', data => {
     appendsysmessage(`${data} joined the game`, 'greenyellow')
 })
+
+//=====================================================RECEIVEING MESSAGE========================================================================
 
 socket.on('receive', data => {
     appendmessage(`${data.name}: ${data.message}`, 'left')
 })
 
+//====================================================WHEN SOMEONE LEAVES========================================================================
+
 socket.on('user-left', data => {
     appendsysmessage(`${data.name} left the game`, 'red')
 })
 
+//=====================================================DISPLAY ROLES=============================================================================
+
 socket.on('server-message', message => {
     rolearea.innerText = `Your Role Is : ${message}`
 })
+
+//=====================================================KILL FORM FOR WOLF========================================================================
 
 socket.on('startkill', players => {
     pcontainer.classList.remove('hidden');
@@ -102,6 +129,8 @@ socket.on('startkill', players => {
         }
     })
 })
+
+//=====================================================SUSPECT FORM FOR SEER=====================================================================
 
 socket.on('suspect', players => {
     pcontainer.classList.remove('hidden');
@@ -134,17 +163,15 @@ socket.on('suspect', players => {
     })
 })
 
-
-socket.on('gamestart', () => {
-    gamestartbutton.classList.add('hidden');
-    disablechat()
-})
+//=====================================================DISPLAY KILLED============================================================================
 
 socket.on('display-dead', name => {
     if (phase != 'none') {
         appendsysmessage(`${name} was killed`, 'yellow')
     }
 })
+ 
+//=====================================================DAY: START VOTE===========================================================================
 
 socket.on('gamephaseday', players => {
     enablechat();
@@ -178,17 +205,21 @@ socket.on('gamephaseday', players => {
     })
 })
 
-socket.on('game-end', winner => {
-    appendsysmessage(`${winner} won the game`, 'aqua')
-    pcontainer.classList.add('hidden')
-    gamestartbutton.classList.remove('hidden')
-    gamestartbutton.textContent = 'play again'
-    phase = 'none'
-})
+//=====================================================VOTE END: DISPLAY VOTED PLAYER============================================================
 
 socket.on('vote-end', name => {
     if (phase != 'none') {
         disablechat();
         appendsysmessage(`${name} was voted out`, 'yellow')
     }
+})
+
+//=====================================================END: DISPLAY WINNER=======================================================================
+
+socket.on('game-end', winner => {
+    appendsysmessage(`${winner} won the game`, 'aqua')
+    pcontainer.classList.add('hidden')
+    gamestartbutton.classList.remove('hidden')
+    gamestartbutton.textContent = 'play again'
+    phase = 'none'
 })

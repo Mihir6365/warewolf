@@ -22,18 +22,26 @@ var rolesubmission = 0
 io.on("connection", (socket) => {
     socket.join('alive');
     alivecount++
+
+    //---------------------------------------------------------------USER JOINS-----------------------------------------------------------------
+
     socket.on("new-user-joined", (uname) => {
         let user = { name: uname, id: socket.id, status: 'alive', votes: 0 };
         users[socket.id] = user;
         // console.log(socket.client.conn.server.clientsCount)
         socket.broadcast.emit("user-joined", uname);
     });
+
+    //---------------------------------------------------------------SEND MESSAGE----------------------------------------------------------------
+
     socket.on("send", (message) => {
         socket.broadcast.emit("receive", {
             message: message,
             name: users[socket.id].name,
         });
     });
+
+    //---------------------------------------------------------------USER DISCONNECTS------------------------------------------------------------
 
     socket.on("disconnect", () => {
         socket.broadcast.emit("user-left", users[socket.id]);
@@ -53,6 +61,8 @@ io.on("connection", (socket) => {
         alivecount--
         delete users[socket.id];
     });
+
+    //---------------------------------------------------------------GAME STARTS-----------------------------------------------------------------
 
     socket.on("start-game", () => {
         //give random roles. seer and wolf are fixed. rest are filled with villagers
@@ -88,6 +98,8 @@ io.on("connection", (socket) => {
 
     });
 
+    //---------------------------------------------------------------WOLF KILLS SOMEONE----------------------------------------------------------
+
     socket.on('kill', player => {
         users[player].status = 'dead'
         io.sockets.sockets.get(player).leave("alive");
@@ -100,6 +112,9 @@ io.on("connection", (socket) => {
             io.sockets.emit('game-end', 'Wolf')
         }
     })
+
+    //----------------------------------------------------------------DAY STARTS-----------------------------------------------------------------
+    
     socket.on('toggleday', () => {
         votecount = 0;
         rolesubmission++
@@ -109,6 +124,9 @@ io.on("connection", (socket) => {
             rolesubmission = 0;
         }
     })
+
+    //----------------------------------------------------------------VOTING STARTS--------------------------------------------------------------
+
     socket.on('vote', players => {
         rolesubmission = 0
         votecount++
@@ -159,7 +177,7 @@ io.on("connection", (socket) => {
                 }
                 votecount = 0;
                 io.in('wolf').emit("startkill", users);
-                io.in('seer').emit("suspect", users)
+                io.in('seer').emit("suspect", users);
             }
     })
 });
