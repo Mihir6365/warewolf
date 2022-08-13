@@ -1,4 +1,4 @@
-.text-area {
+.text-area{
     border-radius: 12px;
     width: 30%;
     height: 88vh;
@@ -8,6 +8,7 @@
     right: 0%;
     overflow-y: scroll;
     background-color: rgb(51, 51, 51);
+    border: 2px solid black;
 }
 
 body {
@@ -19,14 +20,15 @@ body {
     font-size: large;
     top: 0%;
     border-radius: 8px;
-    width: 29%;
+    width: 30%;
     margin: 2px;
     height: 5vh;
     position: absolute;
     text-align: center;
     color: rgb(146, 106, 246);
-    right: 1%;
+    right: 0%;
     background-color: rgb(51, 51, 51);
+    border:2px solid black;
 }
 
 .voteform {
@@ -43,13 +45,14 @@ body {
 
 #voting-area {
     border-radius: 12px;
-    width: 30%;
+    width: 500px;
     height: 50vh;
     position: absolute;
     bottom: 38px;
     right: 45%;
     overflow-y: scroll;
     background-color: rgb(51, 51, 51);
+    border: 2px solid black;
 }
 
 .message {
@@ -106,4 +109,15 @@ body {
 
 .hidden {
     display: none;
+}
+
+#sys-messages{
+    border-radius: 12px;
+    border: 2px solid black;
+    width: 30%;
+    height: 50px;
+    position: relative;
+    top: 20%;
+    right: 50%;
+    background-color: rgb(51, 51, 51);
 }

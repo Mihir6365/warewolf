@@ -1,225 +1,239 @@
 var socket = io();
-const form = document.getElementById('messageform');
-const messagebox = document.getElementById('text-box');
-const sendbutton = document.getElementById('send-button')
-const container = document.querySelector('.text-area');
-const pcontainer = document.getElementById('voting-area')
-const rolebox = document.getElementById('rolearea')
-const gamestartbutton = document.getElementById('gamestartbutton')
-var phase = 'night';
+const form = document.getElementById("messageform");
+const messagebox = document.getElementById("text-box");
+const sendbutton = document.getElementById("send-button");
+const container = document.querySelector(".text-area");
+const pcontainer = document.getElementById("voting-area");
+const rolebox = document.getElementById("rolearea");
+const gamestartbutton = document.getElementById("gamestartbutton");
+var phase = "night";
 
 //=====================================================GAME START================================================================================
 
 function startgame() {
-    socket.emit('start-game')
+  socket.emit("start-game");
 }
 
 //=====================================================DISABLE CHAT==============================================================================
 
 function disablechat() {
-    messagebox.disabled = true
-    messagebox.value = null
-    sendbutton.disabled = true
-    messagebox.placeholder = 'chat disabled'
+  messagebox.disabled = true;
+  messagebox.value = null;
+  sendbutton.disabled = true;
+  messagebox.placeholder = "chat disabled";
 }
 
 //=====================================================ENABLE CHAT===============================================================================
 
 function enablechat() {
-    messagebox.placeholder = ''
-    messagebox.disabled = false
-    sendbutton.disabled = false
+  messagebox.placeholder = "";
+  messagebox.disabled = false;
+  sendbutton.disabled = false;
 }
 
 //=====================================================TAKE USER NAME============================================================================
 
 const uname = prompt("Enter your name to join");
-socket.emit('new-user-joined', uname);
+socket.emit("new-user-joined", uname);
 
 //=====================================================START GAME================================================================================
 
-socket.on('gamestart', () => {
-    gamestartbutton.classList.add('hidden');
-    disablechat()
-})
+socket.on("gamestart", () => {
+  gamestartbutton.classList.add("hidden");
+  disablechat();
+});
 
 //=====================================================ADD SYSTEM MESSAGE TO CHAT BOX============================================================
 
 const appendsysmessage = (message, color) => {
-    const messageelement = document.createElement('div')
-    messageelement.innerText = message;
-    messageelement.classList.add('message')
-    messageelement.classList.add('center')
-    messageelement.style.color = color;
-    container.append(messageelement)
-}
+  const messageelement = document.createElement("div");
+  messageelement.innerText = message;
+  messageelement.classList.add("message");
+  messageelement.classList.add("center");
+  messageelement.style.color = color;
+  container.append(messageelement);
+};
 
 //=====================================================NORMAL MESSAGE APPEND=====================================================================
 
 const appendmessage = (message, position) => {
-    const messageelement = document.createElement('div')
-    messageelement.innerText = message;
-    messageelement.classList.add('message')
-    messageelement.classList.add(position)
-    container.append(messageelement)
-}
+  const messageelement = document.createElement("div");
+  messageelement.innerText = message;
+  messageelement.classList.add("message");
+  messageelement.classList.add(position);
+  container.append(messageelement);
+};
 
 //=====================================================SEND A NORMAL MESSAGE=====================================================================
 
-form.addEventListener('submit', (e) => {
-    e.preventDefault()
-    const message = messagebox.value;
-    appendmessage(`You: ${message}`, 'right');
-    socket.emit('send', message);
-    messagebox.value = null;
-})
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const message = messagebox.value;
+  appendmessage(`You: ${message}`, "right");
+  socket.emit("send", message);
+  messagebox.value = null;
+});
 
 //=====================================================SOMEONE JOINED GAME MESSAGE===============================================================
 
-socket.on('user-joined', data => {
-    appendsysmessage(`${data} joined the game`, 'greenyellow')
-})
+socket.on("user-joined", (data) => {
+  appendsysmessage(`${data} joined the game`, "greenyellow");
+});
 
 //=====================================================RECEIVEING MESSAGE========================================================================
 
-socket.on('receive', data => {
-    appendmessage(`${data.name}: ${data.message}`, 'left')
-})
+socket.on("receive", (data) => {
+  appendmessage(`${data.name}: ${data.message}`, "left");
+});
 
 //====================================================WHEN SOMEONE LEAVES========================================================================
 
-socket.on('user-left', data => {
-    appendsysmessage(`${data.name} left the game`, 'red')
-})
+socket.on("user-left", (data) => {
+  appendsysmessage(`${data.name} left the game`, "red");
+});
 
 //=====================================================DISPLAY ROLES=============================================================================
 
-socket.on('server-message', message => {
-    rolearea.innerText = `Your Role Is : ${message}`
-})
+socket.on("server-message", (message) => {
+  rolearea.innerText = `Your Role Is : ${message}`;
+});
 
 //=====================================================KILL FORM FOR WOLF========================================================================
 
-socket.on('startkill', players => {
-    pcontainer.classList.remove('hidden');
-    pcontainer.innerHTML = ""
-    Object.keys(players).forEach(function(player) {
-        if (players[player].role.localeCompare('Wolf') != 0 && players[player].status.localeCompare('dead') != 0) {
-            var form = document.createElement('form')
-            form.classList.add('voteform')
-            var div = document.createElement('div')
-            div.classList.add('left')
-            div.classList.add('text')
-            div.innerText = players[player].name;
-            var button = document.createElement('button')
-            button.setAttribute('type', 'submit')
-            button.classList.add('button')
-            button.classList.add('right')
-            button.setAttribute('id', 'vote-button')
-            button.textContent = 'Kill'
-            form.appendChild(div);
-            form.appendChild(button)
-            form.addEventListener('submit', (e) => {
-                e.preventDefault()
-                pcontainer.classList.add('hidden')
-                socket.emit("kill", player)
-                socket.emit('toggleday')
-            })
-            pcontainer.appendChild(form)
-        }
-    })
-})
+socket.on("startkill", (players) => {
+  pcontainer.classList.remove("hidden");
+  pcontainer.innerHTML = "";
+  Object.keys(players).forEach(function (player) {
+    if (
+      players[player].role.localeCompare("Wolf") != 0 &&
+      players[player].status.localeCompare("dead") != 0
+    ) {
+      var form = document.createElement("form");
+      form.classList.add("voteform");
+      var div = document.createElement("div");
+      div.classList.add("left");
+      div.classList.add("text");
+      div.innerText = players[player].name;
+      var button = document.createElement("button");
+      button.setAttribute("type", "submit");
+      button.classList.add("button");
+      button.classList.add("right");
+      button.setAttribute("id", "vote-button");
+      button.textContent = "Kill";
+      form.appendChild(div);
+      form.appendChild(button);
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        pcontainer.classList.add("hidden");
+        socket.emit("kill", player);
+        socket.emit("toggleday");
+      });
+      pcontainer.appendChild(form);
+    }
+  });
+});
 
 //=====================================================SUSPECT FORM FOR SEER=====================================================================
 
-socket.on('suspect', players => {
-    pcontainer.classList.remove('hidden');
-    pcontainer.innerHTML = ""
+socket.on("suspect", (players) => {
+  pcontainer.classList.remove("hidden");
+  pcontainer.innerHTML = "";
 
-    Object.keys(players).forEach(function(player) {
-        if (players[player].role.localeCompare('Seer') != 0 && players[player].status == 'alive') {
-            var form = document.createElement('form')
-            form.classList.add('voteform')
-            var div = document.createElement('div')
-            div.classList.add('left')
-            div.classList.add('text')
-            div.innerText = players[player].name;
-            var button = document.createElement('button')
-            button.setAttribute('type', 'submit')
-            button.classList.add('button')
-            button.classList.add('right')
-            button.setAttribute('id', 'vote-button')
-            button.textContent = 'suspect'
-            form.appendChild(div);
-            form.appendChild(button)
-            form.addEventListener('submit', (e) => {
-                e.preventDefault()
-                pcontainer.classList.add('hidden')
-                if (players[player].role == 'Wolf') { appendsysmessage(`${players[player].name} was the wolf`, 'yellow') } else { appendsysmessage(`${players[player].name} was NOT the wolf`, 'yellow') }
-                socket.emit('toggleday')
-            })
-            pcontainer.appendChild(form)
+  Object.keys(players).forEach(function (player) {
+    if (
+      players[player].role.localeCompare("Seer") != 0 &&
+      players[player].status == "alive"
+    ) {
+      var form = document.createElement("form");
+      form.classList.add("voteform");
+      var div = document.createElement("div");
+      div.classList.add("left");
+      div.classList.add("text");
+      div.innerText = players[player].name;
+      var button = document.createElement("button");
+      button.setAttribute("type", "submit");
+      button.classList.add("button");
+      button.classList.add("right");
+      button.setAttribute("id", "vote-button");
+      button.textContent = "suspect";
+      form.appendChild(div);
+      form.appendChild(button);
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        pcontainer.classList.add("hidden");
+        if (players[player].role == "Wolf") {
+          appendsysmessage(`${players[player].name} was the wolf`, "yellow");
+        } else {
+          appendsysmessage(
+            `${players[player].name} was NOT the wolf`,
+            "yellow"
+          );
         }
-    })
-})
+        socket.emit("toggleday");
+      });
+      pcontainer.appendChild(form);
+    }
+  });
+});
 
 //=====================================================DISPLAY KILLED============================================================================
 
-socket.on('display-dead', name => {
-    if (phase != 'none') {
-        appendsysmessage(`${name} was killed`, 'yellow')
-    }
-})
- 
+socket.on("display-dead", (name) => {
+  if (phase != "none") {
+    appendsysmessage(`${name} was killed`, "yellow");
+  }
+});
+
 //=====================================================DAY: START VOTE===========================================================================
 
-socket.on('gamephaseday', players => {
-    enablechat();
-    pcontainer.classList.remove('hidden');
-    pcontainer.innerHTML = ""
+socket.on("gamephaseday", (players) => {
+  enablechat();
+  pcontainer.classList.remove("hidden");
+  pcontainer.innerHTML = "";
 
-    Object.keys(players).forEach(function(player) {
-        if (players[player].status.localeCompare('dead') != 0) {
-            var form = document.createElement('form')
-            form.classList.add('voteform')
-            var div = document.createElement('div')
-            div.classList.add('left')
-            div.classList.add('text')
-            div.innerText = players[player].name;
-            var button = document.createElement('button')
-            button.setAttribute('type', 'submit')
-            button.classList.add('button')
-            button.classList.add('right')
-            button.setAttribute('id', 'vote-button')
-            button.textContent = 'Vote'
-            form.appendChild(div);
-            form.appendChild(button)
-            form.addEventListener('submit', (e) => {
-                e.preventDefault()
-                pcontainer.classList.add('hidden')
-                appendsysmessage(`You voted for ${players[player].name}`, 'yellow')
-                socket.emit("vote", player)
-            })
-            pcontainer.appendChild(form)
-        }
-    })
-})
+  Object.keys(players).forEach(function (player) {
+    if (players[player].status.localeCompare("dead") != 0) {
+      var form = document.createElement("form");
+      form.classList.add("voteform");
+      var div = document.createElement("div");
+      div.classList.add("left");
+      div.classList.add("text");
+      div.innerText = players[player].name;
+      var button = document.createElement("button");
+      button.setAttribute("type", "submit");
+      button.classList.add("button");
+      button.classList.add("right");
+      button.setAttribute("id", "vote-button");
+      button.textContent = "Vote";
+      form.appendChild(div);
+      form.appendChild(button);
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        pcontainer.classList.add("hidden");
+        appendsysmessage(`You voted for ${players[player].name}`, "yellow");
+        socket.emit("vote", player);
+      });
+      pcontainer.appendChild(form);
+    }
+  });
+});
 
 //=====================================================VOTE END: DISPLAY VOTED PLAYER============================================================
 
-socket.on('vote-end', name => {
-    if (phase != 'none') {
-        disablechat();
-        appendsysmessage(`${name} was voted out`, 'yellow')
-    }
-})
+socket.on("vote-end", (name) => {
+  if (phase != "none") {
+    disablechat();
+    appendsysmessage(`${name} was voted out`, "yellow");
+  }
+});
 
 //=====================================================END: DISPLAY WINNER=======================================================================
 
-socket.on('game-end', winner => {
-    appendsysmessage(`${winner} won the game`, 'aqua')
-    pcontainer.classList.add('hidden')
-    gamestartbutton.classList.remove('hidden')
-    gamestartbutton.textContent = 'play again'
-    phase = 'none'
-})
+socket.on("game-end", (winner) => {
+  appendsysmessage(`${winner} won the game`, "aqua");
+  pcontainer.classList.add("hidden");
+  gamestartbutton.classList.remove("hidden");
+  gamestartbutton.textContent = "play again";
+  enablechat();
+  phase = "none";
+});

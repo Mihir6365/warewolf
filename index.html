@@ -13,15 +13,20 @@
 
 <body>
     <button class="button" onclick="startgame()" id="gamestartbutton">start game</button>
-    <div id="voting-area" class="hidden"></div>
-    <div id="fixed-box"><strong id="rolearea"> Waiting for the game to start </strong></div>
-    <div class="text-area">
+    <div>
+        <div id="sys-messages"></div>
+        <div id="voting-area" class="hidden"></div>
     </div>
-    <div class="form">
-        <form class="text-box" id="messageform" action="">
-            <input type="text" id="text-box" autocomplete="off">
-            <button type="submit" class="button" id="send-button">send</button>
-        </form>
+    <div>
+        <div id="fixed-box"><strong id="rolearea"> Waiting for the game to start </strong></div>
+        <div class="text-area">
+        </div>
+        <div class="form">
+            <form class="text-box" id="messageform" action="">
+                <input type="text" id="text-box" autocomplete="off">
+                <button type="submit" class="button" id="send-button">send</button>
+            </form>
+        </div>
     </div>
 </body>
 
