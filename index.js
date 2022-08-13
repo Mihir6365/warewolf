@@ -105,6 +105,7 @@ io.on("connection", (socket) => {
     io.sockets.sockets.get(player).leave("alive");
     if (users[player].role == "Seer") {
       io.sockets.sockets.get(player).leave("seer");
+      seercount--;
     }
     recentdeath = player;
     alivecount--;
@@ -116,8 +117,17 @@ io.on("connection", (socket) => {
   //----------------------------------------------------------------DAY STARTS-----------------------------------------------------------------
 
   socket.on("toggleday", () => {
+    console.log("toggleday running");
     votecount = 0;
     rolesubmission++;
+    console.log(
+      "seercount is ",
+      seercount,
+      "wolfcount is ",
+      wolfcount,
+      "rolesubmission is ",
+      rolesubmission
+    );
     if (rolesubmission == seercount + wolfcount) {
       io.sockets.emit("display-dead", users[recentdeath].name);
       io.in("alive").emit("gamephaseday", users);
@@ -128,7 +138,6 @@ io.on("connection", (socket) => {
   //----------------------------------------------------------------VOTING STARTS--------------------------------------------------------------
 
   socket.on("vote", (players) => {
-    rolesubmission = 0;
     votecount++;
     users[players].votes++;
     if (votecount == alivecount) {
@@ -174,7 +183,6 @@ io.on("connection", (socket) => {
           users[player].votes = 0;
         }
       }
-      votecount = 0;
       if (!gameend) {
         io.in("wolf").emit("startkill", users);
         io.in("seer").emit("suspect", users);
