@@ -1,15 +1,17 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const app = express();
 var path = require("path");
 const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
 app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
-});
 
 var users = {};
 var recentdeath;
@@ -19,6 +21,17 @@ var wolfcount = 0;
 var seercount = 0;
 var rolesubmission = 0;
 var gameend = false;
+var uname;
+app.get("/", (req, res) => {
+  res.redirect("/home");
+});
+app.post("/", (req, res) => {
+  uname = req.body.name;
+  res.sendFile(__dirname + "/index.html");
+});
+app.get("/home", (req, res) => {
+  res.sendFile(__dirname + "/landing.html");
+});
 
 io.on("connection", (socket) => {
   socket.join("alive");
@@ -26,7 +39,7 @@ io.on("connection", (socket) => {
 
   //---------------------------------------------------------------USER JOINS-----------------------------------------------------------------
 
-  socket.on("new-user-joined", (uname) => {
+  socket.on("new-user-joined", () => {
     let user = { name: uname, id: socket.id, status: "alive", votes: 0 };
     users[socket.id] = user;
     // console.log(socket.client.conn.server.clientsCount)
@@ -84,7 +97,6 @@ io.on("connection", (socket) => {
         wolfcount++;
       } else if (roles[random] == "Seer") {
         io.sockets.sockets.get(players).join("seer");
-
         seercount++;
       } else {
         io.sockets.sockets.get(players).join("villager");
@@ -104,26 +116,23 @@ io.on("connection", (socket) => {
     users[player].status = "dead";
     io.sockets.sockets.get(player).leave("alive");
     if (users[player].role == "Seer") {
+      io.in("seer").emit("seer-dies");
       io.sockets.sockets.get(player).leave("seer");
       seercount--;
     }
     recentdeath = player;
     alivecount--;
-    if (alivecount == 2 * wolfcount) {
-      io.sockets.emit("game-end", "Wolf");
-    }
   });
 
   //----------------------------------------------------------------DAY STARTS-----------------------------------------------------------------
 
   socket.on("toggleday", () => {
-    console.log("toggleday running");
     votecount = 0;
     rolesubmission++;
     console.log(
-      "seercount is ",
+      "seer count is ",
       seercount,
-      "wolfcount is ",
+      "wolf count is ",
       wolfcount,
       "rolesubmission is ",
       rolesubmission
@@ -157,6 +166,7 @@ io.on("connection", (socket) => {
 
       if (maxplayersvoted > 1) {
         console.log("draw votes");
+        io.sockets.emit("sysem-message", "wait for the night to end");
       } else {
         alivecount--;
         for (var player in users) {
@@ -184,6 +194,7 @@ io.on("connection", (socket) => {
         }
       }
       if (!gameend) {
+        io.sockets.emit("system-message", "Wait for the night to end");
         io.in("wolf").emit("startkill", users);
         io.in("seer").emit("suspect", users);
       }

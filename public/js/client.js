@@ -6,6 +6,7 @@ const container = document.querySelector(".text-area");
 const pcontainer = document.getElementById("voting-area");
 const rolebox = document.getElementById("rolearea");
 const gamestartbutton = document.getElementById("gamestartbutton");
+const sysmessage = document.getElementById("sysmessagedisplayer");
 var phase = "night";
 
 //=====================================================GAME START================================================================================
@@ -33,12 +34,12 @@ function enablechat() {
 
 //=====================================================TAKE USER NAME============================================================================
 
-const uname = prompt("Enter your name to join");
-socket.emit("new-user-joined", uname);
+socket.emit("new-user-joined");
 
 //=====================================================START GAME================================================================================
 
 socket.on("gamestart", () => {
+  sysmessage.innerText = "Wait until day arrives";
   gamestartbutton.classList.add("hidden");
   disablechat();
 });
@@ -98,9 +99,10 @@ socket.on("server-message", (message) => {
   rolearea.innerText = `Your Role Is : ${message}`;
 });
 
-//=====================================================KILL FORM FOR WOLF========================================================================
+//=====================================================KILL : WOLF========================================================================
 
 socket.on("startkill", (players) => {
+  sysmessage.innerText = "Pick a player to kill";
   pcontainer.classList.remove("hidden");
   pcontainer.innerHTML = "";
   Object.keys(players).forEach(function (player) {
@@ -136,6 +138,7 @@ socket.on("startkill", (players) => {
 //============================================================SUSPECT : SEER=====================================================================
 
 socket.on("suspect", (players) => {
+  sysmessage.innerText = "Pick a player who you think is wolf";
   pcontainer.classList.remove("hidden");
   pcontainer.innerHTML = "";
 
@@ -187,6 +190,7 @@ socket.on("display-dead", (name) => {
 //=====================================================DAY: START VOTE===========================================================================
 
 socket.on("gamephaseday", (players) => {
+  sysmessage.innerText = "Vote a player to vote. That player will be killed.";
   enablechat();
   pcontainer.classList.remove("hidden");
   pcontainer.innerHTML = "";
@@ -227,9 +231,23 @@ socket.on("vote-end", (name) => {
   }
 });
 
+//=========================================================Display any system message============================================================
+
+socket.on("system-message", (message) => {
+  sysmessage.innerText = message;
+});
+
+//=============================================================Special case seer dies============================================================
+
+socket.on("seer-dies", () => {
+  pcontainer.classList.add("hidden");
+  sysmessage.innerText = "Wolf killed you";
+});
+
 //=====================================================END: DISPLAY WINNER=======================================================================
 
 socket.on("game-end", (winner) => {
+  sysmessage.innerText = "The game has ended";
   appendsysmessage(`${winner} won the game`, "aqua");
   pcontainer.classList.add("hidden");
   gamestartbutton.classList.remove("hidden");

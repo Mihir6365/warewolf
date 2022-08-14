@@ -1,33 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <script defer src="/socket.io/socket.io.js"></script>
     <script defer src="./js/client.js"></script>
-    <link rel="stylesheet" href="./css/style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Warewolf</title>
-</head>
+  </head>
 
-<body>
-    <button class="button" onclick="startgame()" id="gamestartbutton">start game</button>
-    <div>
-        <div id="sys-messages"></div>
-        <div id="voting-area" class="hidden"></div>
-    </div>
-    <div>
-        <div id="fixed-box"><strong id="rolearea"> Waiting for the game to start </strong></div>
-        <div class="text-area">
-        </div>
-        <div class="form">
-            <form class="text-box" id="messageform" action="">
-                <input type="text" id="text-box" autocomplete="off">
-                <button type="submit" class="button" id="send-button">send</button>
-            </form>
-        </div>
-    </div>
-</body>
+  <body>
+    <button class="button" onclick="startgame()" id="gamestartbutton">
+      start game
+    </button>
 
+    <div id="sys-messages">
+      <strong id="sysmessagedisplayer"> The game has not started yet </strong>
+    </div>
+    <div id="voting-area" class="hidden"></div>
+
+    <div id="fixed-box">
+      <strong id="rolearea"> Waiting for the game to start </strong>
+    </div>
+    <div class="text-area"></div>
+    <div class="form">
+      <form class="text-box" id="messageform" action="">
+        <input type="text" id="text-box" autocomplete="off" />
+        <button type="submit" class="button" id="send-button">send</button>
+      </form>
+    </div>
+  </body>
 </html>
