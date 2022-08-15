@@ -11,6 +11,7 @@ app.use(
     extended: true,
   })
 );
+app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
 var users = {};
@@ -22,29 +23,64 @@ var seercount = 0;
 var rolesubmission = 0;
 var gameend = false;
 var uname;
+var rooms = [];
+
+function getrandom() {
+  var code = "";
+  var possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (var i = 0; i < 4; i++)
+    code += possible.charAt(Math.floor(Math.random() * possible.length));
+  return code;
+}
+
 app.get("/", (req, res) => {
-  res.redirect("/home");
+  res.render("landing", { error: "" });
 });
+
 app.post("/", (req, res) => {
-  uname = req.body.name;
-  res.sendFile(__dirname + "/index.html");
+  if (req.body.name == "") {
+    res.render("landing", { error: "please enter a valid name" });
+  }
+  if (req.body.code == "") {
+    var code = getrandom();
+    while (rooms.includes(code)) {
+      code = getrandom();
+    }
+    rooms.push(code);
+    uname = req.body.name;
+    console.log(code);
+    res.sendFile(__dirname + "/index.html");
+  } else if (!rooms.includes(req.body.code)) {
+    res.render("landing", { error: "invalid code" });
+  } else {
+    uname = req.body.name;
+    res.sendFile(__dirname + "/index.html");
+  }
 });
+
 app.get("/home", (req, res) => {
   res.sendFile(__dirname + "/landing.html");
 });
 
 io.on("connection", (socket) => {
+  console.log("connection established");
   socket.join("alive");
+  let user = {
+    name: uname,
+    id: socket.id,
+    status: "alive",
+    votes: 0,
+    role: "none",
+  };
+  users[socket.id] = user;
+  socket.broadcast.emit("user-joined", uname);
   alivecount++;
+  // console.log(socket.client.conn.server.clientsCount)
 
   //---------------------------------------------------------------USER JOINS-----------------------------------------------------------------
 
-  socket.on("new-user-joined", () => {
-    let user = { name: uname, id: socket.id, status: "alive", votes: 0 };
-    users[socket.id] = user;
-    // console.log(socket.client.conn.server.clientsCount)
-    socket.broadcast.emit("user-joined", uname);
-  });
+  socket.on("new-user-joined", () => {});
 
   //---------------------------------------------------------------SEND MESSAGE----------------------------------------------------------------
 
@@ -71,7 +107,6 @@ io.on("connection", (socket) => {
     if (users[socket.id].status == "alive") {
       alivecount--;
     }
-
     alivecount--;
     delete users[socket.id];
   });
