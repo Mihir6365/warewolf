@@ -27,6 +27,8 @@ function getrandom() {
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (var i = 0; i < 4; i++)
     code += possible.charAt(Math.floor(Math.random() * possible.length));
+  roomdata[code].playercount = 0;
+  usersinroom.code = [];
   return code;
 }
 
@@ -47,7 +49,6 @@ app.post("/", (req, res) => {
     uname = req.body.name;
     console.log(code);
     codetojoin = code;
-    roomdata[codetojoin].playercount = 0;
     res.sendFile(__dirname + "/index.html");
   } else if (!rooms.includes(req.body.code)) {
     res.render("landing", { error: "invalid code" });
@@ -67,6 +68,7 @@ io.on("connection", (socket) => {
   console.log("connection established");
   socket.join("alive");
   socket.join(codetojoin);
+  usersinroom[codetojoin].push(socket.id);
   roomdata[users[socket.id].roomid].playercount++;
   let user = {
     name: uname,
@@ -129,7 +131,7 @@ io.on("connection", (socket) => {
     for (let i = 0; i < playercount - 2; i++) {
       roles.push("Villager");
     }
-    for (var players in users) {
+    for (var players in usersinroom[users[socket.id].roomid]) {
       var random = Math.floor(Math.random() * playercount);
       users[players].role = roles[random];
       if (roles[random] === "Wolf") {
@@ -146,9 +148,16 @@ io.on("connection", (socket) => {
       roles.splice(random, 1);
       playercount--;
     }
+
+    // temp={name : role}
+    var temp = {};
+    for (var player in usersinroom[users[socket.id].roomid]) {
+      temp[player] = users[player];
+    }
+
     io.in(users[socket.id].roomid).emit("gamestart");
-    io.in("wolf", users[socket.id].roomid).emit("startkill", users);
-    io.in("seer", users[socket.id].roomid).emit("suspect", users);
+    io.in("wolf", users[socket.id].roomid).emit("startkill", temp);
+    io.in("seer", users[socket.id].roomid).emit("suspect", temp);
   });
 
   //---------------------------------------------------------------WOLF KILLS SOMEONE----------------------------------------------------------
@@ -180,7 +189,10 @@ io.on("connection", (socket) => {
         "display-dead",
         users[roomdata[users[socket.id].roomid].recentdeath].name
       );
-      io.in("alive", users[socket.id].roomid).emit("gamephaseday", users);
+      for (var player in usersinroom[users[socket.id].roomid]) {
+        temp[player] = users[player];
+      }
+      io.in("alive", users[socket.id].roomid).emit("gamephaseday", temp);
       roomdata[users[socket.id].roomid].rolesubmission = 0;
     }
   });
@@ -207,7 +219,7 @@ io.on("connection", (socket) => {
       for (var player in users) {
         if (users[player].votes == roomdata[users[socket.id].roomid].maxvotes) {
           roomdata[users[socket.id].roomid].maxplayersvoted++;
-          roomdata[users[socket.id].roomid].votedplayer = users[player].name;
+          roomdata[users[socket.id].roomid].votedplayer = player;
         }
       }
 
@@ -220,35 +232,31 @@ io.on("connection", (socket) => {
       } else {
         roomdata[users[socket.id].roomid].alivecount--;
         roomdata[users[socket.id].roomid].playercount--;
-        for (var player in users) {
-          if (
-            users[player].votes == roomdata[users[socket.id].roomid].maxvotes
-          ) {
-            users[player].status = "dead";
-            io.sockets.sockets.get(player).leave("alive");
-            if (users[player].role == "Wolf") {
-              io.sockets.sockets.get(player).leave("wolf");
-              roomdata[users[socket.id].roomid].wolfcount--;
-              if (roomdata[users[socket.id].roomid].wolfcount == 0) {
-                io.in(users[socket.id].roomid).emit("game-end", "Villagers");
-              }
-            }
-            if (users[player].role == "Seer") {
-              io.sockets.sockets.get(player).leave("Seer");
-              roomdata[users[socket.id].roomid].seercount--;
-            }
-            if (
-              roomdata[users[socket.id].roomid].alivecount <=
-              2 * roomdata[users[socket.id].roomid].wolfcount + 1
-            ) {
-              io.in(users[socket.id].roomid).emit("game-end", "Wolf");
-              roomdata[users[socket.id].roomid].gameend = true;
-            }
-            io.in(users[socket.id].roomid).emit("vote-end", users[player].name);
+        var temp = roomdata[users[socket.id].roomid].votedplayer;
+        users[temp].status = "dead";
+        io.sockets.sockets.get(temp).leave("alive");
+        if (users[temp].role == "Wolf") {
+          io.sockets.sockets.get(temp).leave("wolf");
+          roomdata[users[socket.id].roomid].wolfcount--;
+          if (roomdata[users[socket.id].roomid].wolfcount == 0) {
+            io.in(users[socket.id].roomid).emit("game-end", "Villagers");
           }
-          users[player].votes = 0;
         }
+        if (users[temp].role == "Seer") {
+          io.sockets.sockets.get(temp).leave("Seer");
+          roomdata[users[socket.id].roomid].seercount--;
+        }
+        if (
+          roomdata[users[socket.id].roomid].alivecount <=
+          2 * roomdata[users[socket.id].roomid].wolfcount + 1
+        ) {
+          io.in(users[socket.id].roomid).emit("game-end", "Wolf");
+          roomdata[users[socket.id].roomid].gameend = true;
+        }
+        io.in(users[socket.id].roomid).emit("vote-end", users[temp].name);
       }
+      users[temp].votes = 0;
+
       if (!roomdata[users[socket.id].roomid].gameend) {
         io.in(users[socket.id].roomid).emit(
           "system-message",
