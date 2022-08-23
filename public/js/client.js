@@ -95,8 +95,8 @@ socket.on("user-left", (data) => {
 
 //=====================================================DISPLAY ROLES=============================================================================
 
-socket.on("server-message", (message) => {
-  rolearea.innerText = `Your Role Is : ${message}`;
+socket.on("role-display", (message) => {
+  rolebox.innerText = `Your Role Is : ${message}`;
 });
 
 //=====================================================KILL : WOLF========================================================================
@@ -190,7 +190,7 @@ socket.on("display-dead", (name) => {
 //=====================================================DAY: START VOTE===========================================================================
 
 socket.on("gamephaseday", (players) => {
-  sysmessage.innerText = "Vote a player to vote. That player will be killed.";
+  sysmessage.innerText = "Pick a player to vote. That player will be killed.";
   enablechat();
   pcontainer.classList.remove("hidden");
   pcontainer.innerHTML = "";

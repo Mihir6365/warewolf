@@ -27,8 +27,7 @@ function getrandom() {
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (var i = 0; i < 4; i++)
     code += possible.charAt(Math.floor(Math.random() * possible.length));
-  roomdata[code].playercount = 0;
-  usersinroom.code = [];
+
   return code;
 }
 
@@ -39,24 +38,26 @@ app.get("/", (req, res) => {
 app.post("/", (req, res) => {
   if (req.body.name == "") {
     res.render("landing", { error: "please enter a valid name" });
-  }
-  if (req.body.code == "") {
-    var code = getrandom();
-    while (rooms.includes(code)) {
-      code = getrandom();
-    }
-    rooms.push(code);
-    uname = req.body.name;
-    console.log(code);
-    codetojoin = code;
-    res.sendFile(__dirname + "/index.html");
-  } else if (!rooms.includes(req.body.code)) {
-    res.render("landing", { error: "invalid code" });
   } else {
-    uname = req.body.name;
-    codetojoin = req.body.code;
-    roomdata[codetojoin].playercount = 0;
-    res.sendFile(__dirname + "/index.html");
+    if (req.body.code == "") {
+      var code = getrandom();
+      while (rooms.includes(code)) {
+        code = getrandom();
+      }
+      rooms.push(code);
+      uname = req.body.name;
+      console.log(code);
+      roomdata[code] = {};
+      usersinroom[code] = [];
+      codetojoin = code;
+      res.sendFile(__dirname + "/index.html");
+    } else if (!rooms.includes(req.body.code)) {
+      res.render("landing", { error: "invalid code" });
+    } else {
+      uname = req.body.name;
+      codetojoin = req.body.code;
+      res.sendFile(__dirname + "/index.html");
+    }
   }
 });
 
@@ -65,27 +66,24 @@ app.get("/home", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("connection established");
-  socket.join("alive");
-  socket.join(codetojoin);
-  usersinroom[codetojoin].push(socket.id);
-  roomdata[users[socket.id].roomid].playercount++;
-  let user = {
-    name: uname,
-    id: socket.id,
-    status: "alive",
-    votes: 0,
-    role: "none",
-    roomid: codetojoin,
-  };
-  users[socket.id] = user;
-  socket.in(users[socket.id].roomid).emit("user-joined", uname);
-  roomdata[users[socket.id].roomid].alivecount++;
-  // console.log(socket.client.conn.server.clientsCount)
+  //---------------------------------------------------------------User Joins--------------------------------------------------------------------
 
-  //---------------------------------------------------------------USER JOINS-----------------------------------------------------------------
-
-  socket.on("new-user-joined", () => {});
+  socket.on("new-user-joined", () => {
+    console.log("connection established");
+    socket.join("alive");
+    socket.join(codetojoin);
+    usersinroom[codetojoin].push(socket.id);
+    let user = {
+      name: uname,
+      id: socket.id,
+      status: "none",
+      votes: 0,
+      roomid: codetojoin,
+      role: "none",
+    };
+    users[socket.id] = user;
+    socket.in(users[socket.id].roomid).emit("user-joined", uname);
+  });
 
   //---------------------------------------------------------------SEND MESSAGE----------------------------------------------------------------
 
@@ -112,7 +110,6 @@ io.on("connection", (socket) => {
     if (users[socket.id].role == "Seer") {
       roomdata[users[socket.id].roomid].seercount--;
     }
-    roomdata[users[socket.id].roomid].playercount--;
     delete users[socket.id];
   });
 
@@ -121,18 +118,22 @@ io.on("connection", (socket) => {
   socket.on("start-game", () => {
     roomdata[users[socket.id].roomid].recentdeath = "none";
     roomdata[users[socket.id].roomid].votecount = 0;
-    roomdata[users[socket.id].roomid].alivecount = 0;
     roomdata[users[socket.id].roomid].wolfcount = 0;
     roomdata[users[socket.id].roomid].seercount = 0;
     roomdata[users[socket.id].roomid].rolesubmission = 0;
     roomdata[users[socket.id].roomid].gameend = false;
+    var playerids = usersinroom[users[socket.id].roomid];
+    var playercount = playerids.length;
+    roomdata[users[socket.id].roomid].alivecount = playercount;
+
     var roles = ["Seer", "Wolf"];
-    var playercount = roomdata[(users[socket.id], roomid)].playercount;
     for (let i = 0; i < playercount - 2; i++) {
       roles.push("Villager");
     }
-    for (var players in usersinroom[users[socket.id].roomid]) {
+    for (var players of playerids) {
+      users[players].status = "alive";
       var random = Math.floor(Math.random() * playercount);
+      console.log(`random role is ${roles[random]}`);
       users[players].role = roles[random];
       if (roles[random] === "Wolf") {
         io.sockets.sockets.get(players).join("wolf");
@@ -143,15 +144,16 @@ io.on("connection", (socket) => {
       } else {
         io.sockets.sockets.get(players).join("villager");
       }
-      // io.sockets.in(players).emit("server-message", roles[random]);
-      io.sockets.in(players).emit("server-message", roles[random]);
+      io.sockets.in(players).emit("role-display", roles[random]);
       roles.splice(random, 1);
       playercount--;
     }
+    console.log("roomdata is ", roomdata);
 
-    // temp={name : role}
+    console.log("users are ", users);
+
     var temp = {};
-    for (var player in usersinroom[users[socket.id].roomid]) {
+    for (var player of usersinroom[users[socket.id].roomid]) {
       temp[player] = users[player];
     }
 
@@ -172,7 +174,6 @@ io.on("connection", (socket) => {
     }
     roomdata[users[socket.id].roomid].recentdeath = player;
     roomdata[users[socket.id].roomid].alivecount--;
-    roomdata[users[socket.id].roomid].playercount--;
   });
 
   //----------------------------------------------------------------DAY STARTS-----------------------------------------------------------------
@@ -189,7 +190,8 @@ io.on("connection", (socket) => {
         "display-dead",
         users[roomdata[users[socket.id].roomid].recentdeath].name
       );
-      for (var player in usersinroom[users[socket.id].roomid]) {
+      var temp = {};
+      for (var player of usersinroom[users[socket.id].roomid]) {
         temp[player] = users[player];
       }
       io.in("alive", users[socket.id].roomid).emit("gamephaseday", temp);
@@ -231,7 +233,6 @@ io.on("connection", (socket) => {
         );
       } else {
         roomdata[users[socket.id].roomid].alivecount--;
-        roomdata[users[socket.id].roomid].playercount--;
         var temp = roomdata[users[socket.id].roomid].votedplayer;
         users[temp].status = "dead";
         io.sockets.sockets.get(temp).leave("alive");
